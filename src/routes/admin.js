@@ -15,26 +15,32 @@ const {
   deleteBatch,
   getAnalytics,
 } = require("../controllers/adminController");
-const { adminAuth } = require("../middlewares/adminAuth");
+const adminAuth = require("../middlewares/adminAuth");
 
-router.get("/dashboard", adminAuth, getDashboardStats);
+const adminRouter = router;
 
-router.get("/courses", adminAuth, getAllCourses);
+adminRouter.get("/dashboard", adminAuth, getDashboardStats);
 
-router.get("/students", adminAuth, getAllStudents);
-router.get("/students/:id/enrollments", adminAuth, getStudentEnrollments);
-router.put("/students/:id", adminAuth, updateStudent);
-router.delete("/students/:id", adminAuth, deleteStudent);
+adminRouter.get("/courses", adminAuth, getAllCourses);
 
-router.get("/courses/:courseId/enrollments", adminAuth, getCourseEnrollments);
+adminRouter.get("/students", adminAuth, getAllStudents);
+adminRouter.get("/students/:id/enrollments", adminAuth, getStudentEnrollments);
+adminRouter.put("/students/:id", adminAuth, updateStudent);
+adminRouter.delete("/students/:id", adminAuth, deleteStudent);
 
-router.get("/assignments", adminAuth, getAssignments);
-router.put("/assignments/:id/review", adminAuth, reviewAssignment);
+adminRouter.get(
+  "/courses/:courseId/enrollments",
+  adminAuth,
+  getCourseEnrollments
+);
 
-router.post("/courses/:courseId/batches", adminAuth, createBatch);
-router.put("/batches/:id", adminAuth, updateBatch);
-router.delete("/batches/:id", adminAuth, deleteBatch);
+adminRouter.get("/assignments", adminAuth, getAssignments);
+adminRouter.put("/assignments/:id/review", adminAuth, reviewAssignment);
 
-router.get("/analytics", adminAuth, getAnalytics);
+adminRouter.post("/courses/:courseId/batches", adminAuth, createBatch);
+adminRouter.put("/batches/:id", adminAuth, updateBatch);
+adminRouter.delete("/batches/:id", adminAuth, deleteBatch);
 
-module.exports = router;
+adminRouter.get("/analytics", adminAuth, getAnalytics);
+
+module.exports = adminRouter;

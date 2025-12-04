@@ -1,8 +1,15 @@
 const Course = require("../models/Course");
 const User = require("../models/User");
 const Enrollment = require("../models/Enrollment");
-const Assignment = require("../models/Assignment");
+const Assignment = require("../models/Assignment"); // fixed
 const Quiz = require("../models/Quiz");
+
+// console.log("Loading adminController...");
+// console.log("Course:", Course);
+// console.log("User:", User);
+// console.log("Enrollment:", Enrollment);
+// console.log("Assignment:", Assignment);
+// console.log("Quiz:", Quiz);
 
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {

@@ -11,20 +11,22 @@ const {
   markLessonComplete,
 } = require("../controllers/courseController");
 const { auth } = require("../middlewares/auth");
-const { adminAuth } = require("../middlewares/adminAuth");
+const adminAuth = require("../middlewares/adminAuth");
+
+const courseRouter = router;
 
 // Public routes
-router.get("/", getCourses);
-router.get("/:id", getCourse);
+courseRouter.get("/", getCourses);
+courseRouter.get("/:id", getCourse);
 
 // Protected routes
-router.post("/:id/enroll", auth, enrollCourse);
-router.get("/:id/progress", auth, getCourseProgress);
-router.post("/:id/lessons/:lessonId/complete", auth, markLessonComplete);
+courseRouter.post("/:id/enroll", auth, enrollCourse);
+courseRouter.get("/:id/progress", auth, getCourseProgress);
+courseRouter.post("/:id/lessons/:lessonId/complete", auth, markLessonComplete);
 
 // Admin routes
-router.post("/", adminAuth, createCourse);
-router.put("/:id", adminAuth, updateCourse);
-router.delete("/:id", adminAuth, deleteCourse);
+courseRouter.post("/", adminAuth, createCourse);
+courseRouter.put("/:id", adminAuth, updateCourse);
+courseRouter.delete("/:id", adminAuth, deleteCourse);
 
-module.exports = router;
+module.exports = courseRouter;

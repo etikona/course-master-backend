@@ -12,24 +12,24 @@ const {
   getProgress,
 } = require("../controllers/studentController");
 const { auth } = require("../middlewares/auth");
-
+const studentRouter = router;
 // Student dashboard
-router.get("/dashboard", auth, getDashboard);
+studentRouter.get("/dashboard", auth, getDashboard);
 
 // Enrolled courses
-router.get("/courses", auth, getEnrolledCourses);
-router.get("/courses/:courseId", auth, getCourseDetails);
-router.get("/courses/:courseId/lessons/:lessonId", auth, getLesson);
-router.get("/courses/:courseId/progress", auth, getProgress);
+studentRouter.get("/courses", auth, getEnrolledCourses);
+studentRouter.get("/courses/:courseId", auth, getCourseDetails);
+studentRouter.get("/courses/:courseId/lessons/:lessonId", auth, getLesson);
+studentRouter.get("/courses/:courseId/progress", auth, getProgress);
 
 // Assignments
-router.post("/assignments", auth, submitAssignment);
+studentRouter.post("/assignments", auth, submitAssignment);
 
 // Quizzes
-router.post("/quizzes/:quizId/submit", auth, takeQuiz);
-router.get("/quizzes/:quizId/results", auth, getQuizResults);
+studentRouter.post("/quizzes/:quizId/submit", auth, takeQuiz);
+studentRouter.get("/quizzes/:quizId/results", auth, getQuizResults);
 
 // Profile
-router.put("/profile", auth, updateProfile);
+studentRouter.put("/profile", auth, updateProfile);
 
-module.exports = router;
+module.exports = studentRouter;

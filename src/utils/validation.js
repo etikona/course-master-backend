@@ -42,4 +42,48 @@ const courseValidation = {
   }),
 };
 
-module.exports = { authValidation, courseValidation };
+const quizValidation = {
+  create: Joi.object({
+    moduleId: Joi.string().required(),
+    title: Joi.string().min(5).max(200).required(),
+    questions: Joi.array()
+      .items(
+        Joi.object({
+          question: Joi.string().required(),
+          options: Joi.array().items(Joi.string()).min(2).required(),
+          correctAnswer: Joi.number().min(0).required(),
+          points: Joi.number().min(1).default(1),
+        })
+      )
+      .min(1)
+      .required(),
+    passingScore: Joi.number().min(0).max(100).default(70),
+    timeLimit: Joi.number().min(1).max(180).default(30), // minutes
+  }),
+
+  submit: Joi.object({
+    answers: Joi.array().items(Joi.number()).required(),
+    timeTaken: Joi.number().min(0), // seconds
+  }),
+};
+
+const assignmentValidation = {
+  submit: Joi.object({
+    courseId: Joi.string().required(),
+    moduleId: Joi.string().required(),
+    submission: Joi.string().required(),
+    submissionType: Joi.string().valid("text", "link", "file").default("text"),
+  }),
+
+  review: Joi.object({
+    grade: Joi.number().min(0).max(100).required(),
+    feedback: Joi.string().max(1000),
+  }),
+};
+
+module.exports = {
+  authValidation,
+  courseValidation,
+  quizValidation,
+  assignmentValidation,
+};

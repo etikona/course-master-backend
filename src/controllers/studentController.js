@@ -3,15 +3,13 @@ const Course = require("../models/Course");
 const Lesson = require("../models/Lesson");
 const Module = require("../models/Module");
 const Quiz = require("../models/Quiz");
+const QuizAttempt = require("../models/QuizAttempt");
 const Assignment = require("../models/Assignment");
 const User = require("../models/User");
 
-// Get student dashboard
 exports.getDashboard = async (req, res) => {
   try {
     const studentId = req.user._id;
-
-    // Get enrollments with progress
     const enrollments = await Enrollment.find({ student: studentId })
       .populate("course", "title thumbnail instructor category")
       .populate({
@@ -24,7 +22,6 @@ exports.getDashboard = async (req, res) => {
       .sort({ enrolledAt: -1 })
       .limit(5);
 
-    // Get stats
     const totalCourses = await Enrollment.countDocuments({
       student: studentId,
     });
@@ -37,7 +34,6 @@ exports.getDashboard = async (req, res) => {
       progress: { $gt: 0, $lt: 100 },
     });
 
-    // Get upcoming assignments
     const assignments = await Assignment.find({
       student: studentId,
       submitted: false,
@@ -47,8 +43,6 @@ exports.getDashboard = async (req, res) => {
       .populate("course", "title")
       .sort({ dueDate: 1 })
       .limit(5);
-
-    // Get recent activity
     const recentActivity = await Enrollment.aggregate([
       { $match: { student: studentId } },
       {
@@ -91,7 +85,6 @@ exports.getDashboard = async (req, res) => {
   }
 };
 
-// Get enrolled courses
 exports.getEnrolledCourses = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
@@ -140,7 +133,6 @@ exports.getEnrolledCourses = async (req, res) => {
   }
 };
 
-// Get course details for enrolled student
 exports.getCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -156,7 +148,6 @@ exports.getCourseDetails = async (req, res) => {
       return res.status(403).json({ error: "Not enrolled in this course" });
     }
 
-    // Get course with modules and lessons
     const course = await Course.findById(courseId)
       .populate("instructor", "name email bio avatar")
       .populate({
@@ -179,7 +170,6 @@ exports.getCourseDetails = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // Mark completed lessons
     const modulesWithProgress = course.modules.map((module) => {
       const moduleLessons = module.lessons || [];
       const completedLessons = moduleLessons.filter((lesson) =>
@@ -197,7 +187,6 @@ exports.getCourseDetails = async (req, res) => {
       };
     });
 
-    // Get assignments for this course
     const assignments = await Assignment.find({
       student: studentId,
       course: courseId,
@@ -205,7 +194,6 @@ exports.getCourseDetails = async (req, res) => {
       .populate("module", "title")
       .sort({ createdAt: -1 });
 
-    // Get quiz attempts for this course
     const quizAttempts = await QuizAttempt.find({
       student: studentId,
       quiz: {
@@ -232,13 +220,11 @@ exports.getCourseDetails = async (req, res) => {
   }
 };
 
-// Get lesson details
 exports.getLesson = async (req, res) => {
   try {
     const { courseId, lessonId } = req.params;
     const studentId = req.user._id;
 
-    // Check enrollment
     const enrollment = await Enrollment.findOne({
       student: studentId,
       course: courseId,
@@ -248,14 +234,12 @@ exports.getLesson = async (req, res) => {
       return res.status(403).json({ error: "Not enrolled in this course" });
     }
 
-    // Get lesson
     const lesson = await Lesson.findById(lessonId).populate("module", "title");
 
     if (!lesson) {
       return res.status(404).json({ error: "Lesson not found" });
     }
 
-    // Get next and previous lessons
     const module = await Module.findById(lesson.module).populate(
       "lessons",
       "title order"
@@ -270,7 +254,6 @@ exports.getLesson = async (req, res) => {
     const nextLesson =
       currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null;
 
-    // Check if lesson is completed
     const isCompleted = enrollment.completedLessons.includes(lessonId);
 
     res.json({
@@ -288,7 +271,6 @@ exports.getLesson = async (req, res) => {
   }
 };
 
-// Submit assignment
 exports.submitAssignment = async (req, res) => {
   try {
     const {
@@ -299,12 +281,10 @@ exports.submitAssignment = async (req, res) => {
     } = req.body;
     const studentId = req.user._id;
 
-    // Validate submission
     if (!submission || submission.trim() === "") {
       return res.status(400).json({ error: "Submission is required" });
     }
 
-    // Check enrollment
     const enrollment = await Enrollment.findOne({
       student: studentId,
       course: courseId,
@@ -314,7 +294,6 @@ exports.submitAssignment = async (req, res) => {
       return res.status(403).json({ error: "Not enrolled in this course" });
     }
 
-    // Check if assignment already submitted
     const existingAssignment = await Assignment.findOne({
       student: studentId,
       course: courseId,
@@ -322,7 +301,6 @@ exports.submitAssignment = async (req, res) => {
     });
 
     if (existingAssignment) {
-      // Update existing submission
       existingAssignment.submission = submission;
       existingAssignment.submissionType = submissionType;
       existingAssignment.submittedAt = new Date();
@@ -336,7 +314,6 @@ exports.submitAssignment = async (req, res) => {
       });
     }
 
-    // Create new assignment submission
     const assignment = await Assignment.create({
       student: studentId,
       course: courseId,
@@ -357,21 +334,18 @@ exports.submitAssignment = async (req, res) => {
   }
 };
 
-// Take quiz
 exports.takeQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const { answers } = req.body; // Array of answer indices
+    const { answers } = req.body;
     const studentId = req.user._id;
 
-    // Get quiz
     const quiz = await Quiz.findById(quizId).populate("module", "title course");
 
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
 
-    // Check enrollment
     const enrollment = await Enrollment.findOne({
       student: studentId,
       course: quiz.module.course,
@@ -381,7 +355,6 @@ exports.takeQuiz = async (req, res) => {
       return res.status(403).json({ error: "Not enrolled in this course" });
     }
 
-    // Check if already attempted (optional: allow retakes)
     const existingAttempt = await QuizAttempt.findOne({
       student: studentId,
       quiz: quizId,
@@ -391,7 +364,6 @@ exports.takeQuiz = async (req, res) => {
       return res.status(400).json({ error: "Quiz already attempted" });
     }
 
-    // Calculate score
     let score = 0;
     const results = quiz.questions.map((question, index) => {
       const isCorrect = answers[index] === question.correctAnswer;
@@ -409,7 +381,6 @@ exports.takeQuiz = async (req, res) => {
     const totalScore = (score / quiz.totalPoints) * 100;
     const passed = totalScore >= quiz.passingScore;
 
-    // Save attempt
     const quizAttempt = await QuizAttempt.create({
       student: studentId,
       quiz: quizId,
@@ -440,7 +411,6 @@ exports.takeQuiz = async (req, res) => {
   }
 };
 
-// Get quiz results
 exports.getQuizResults = async (req, res) => {
   try {
     const { quizId } = req.params;
@@ -455,7 +425,6 @@ exports.getQuizResults = async (req, res) => {
       return res.status(404).json({ error: "No attempts found for this quiz" });
     }
 
-    // Get quiz details
     const quiz = await Quiz.findById(quizId).select(
       "title questions passingScore totalPoints"
     );
@@ -472,7 +441,6 @@ exports.getQuizResults = async (req, res) => {
   }
 };
 
-// Update student profile
 exports.updateProfile = async (req, res) => {
   try {
     const { name, avatar, bio, phone } = req.body;
@@ -498,7 +466,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// Get course progress
 exports.getProgress = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -513,7 +480,6 @@ exports.getProgress = async (req, res) => {
       return res.status(404).json({ error: "Not enrolled in this course" });
     }
 
-    // Get course modules and lessons
     const course = await Course.findById(courseId).populate({
       path: "modules",
       populate: {
@@ -522,7 +488,6 @@ exports.getProgress = async (req, res) => {
       },
     });
 
-    // Calculate detailed progress
     const moduleProgress = course.modules.map((module) => {
       const totalLessons = module.lessons.length;
       const completedLessons = module.lessons.filter((lesson) =>
@@ -541,7 +506,6 @@ exports.getProgress = async (req, res) => {
       };
     });
 
-    // Get upcoming assignments
     const assignments = await Assignment.find({
       student: studentId,
       course: courseId,
@@ -551,7 +515,6 @@ exports.getProgress = async (req, res) => {
       .populate("module", "title")
       .sort({ dueDate: 1 });
 
-    // Get quiz attempts
     const quizAttempts = await QuizAttempt.find({
       student: studentId,
       course: courseId,
